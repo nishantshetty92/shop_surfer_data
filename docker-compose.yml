@@ -17,7 +17,7 @@ services:
     volumes:
       - ./app:/app
     ports:
-      - 8001:8000
+      - 8002:8000
     image: shopsurfer_data:latest
     container_name: shopsurfer_data
     command: "python manage.py runserver 0.0.0.0:8000"

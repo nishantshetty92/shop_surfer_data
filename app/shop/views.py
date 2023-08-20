@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from shop.auth import CustomJWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from .serializers import CategorySerializer, ProductSerializer, CartItemSerializer, OrderSerializer, OrderItemSerializer, ShippingAddressSerializer
 from shop.models import Product, Category, TopCategory, Cart, CartItem, Order, OrderItem, ShippingAddress
@@ -63,11 +62,8 @@ def get_top_categories(request):
 
 
 @api_view(['GET'])
-@authentication_classes([CustomJWTAuthentication])
-@permission_classes([])
 def get_cart_list(request):
-    payload = request.auth
-    user_id = payload.get("user_id")
+    user_id = request.GET.get("user_id", None)
     cart_list = []
     cart = get_object_or_none(Cart, user_id=user_id)
     if cart:
@@ -80,13 +76,10 @@ def get_cart_list(request):
 
 
 @api_view(['POST'])
-@authentication_classes([CustomJWTAuthentication])
-@permission_classes([])
 def add_cart_item(request):
 
-    payload = request.auth
-    user_id = payload.get("user_id")
-    cart_item_dict = dict(request.data)
+    user_id = request.data.get("user_id", None)
+    cart_item_dict = dict(request.data.get("cart_item", {}))
     cart = get_object_or_none(Cart, user_id=user_id)
     if not cart:
         cart = Cart.objects.create(user_id=user_id)
@@ -111,13 +104,10 @@ def add_cart_item(request):
 
 
 @api_view(['POST'])
-@authentication_classes([CustomJWTAuthentication])
-@permission_classes([])
 def merge_cart(request):
 
-    payload = request.auth
-    user_id = payload.get("user_id")
-    cart_items = request.data
+    user_id = request.data.get("user_id", None)
+    cart_items = request.data.get("cart_items", [])
     cart = get_object_or_none(Cart, user_id=user_id)
     if not cart:
         cart = Cart.objects.create(user_id=user_id)
@@ -173,22 +163,20 @@ def merge_cart(request):
 
 
 @api_view(['PATCH'])
-@authentication_classes([CustomJWTAuthentication])
-@permission_classes([])
 def update_cart_item(request):
-    payload = request.auth
-    user_id = payload.get("user_id")
+    user_id = request.data.get("user_id", None)
     # item_id = request.data.pop("item_id", None)
-    product_id = request.data.pop("product_id", None)
+    cart_item_dict = dict(request.data.get("cart_item", {}))
+    product_id = cart_item_dict.pop("product_id", None)
     updated = True
-    if product_id and ("quantity" in request.data or "is_selected" in request.data):
+    if product_id and ("quantity" in cart_item_dict or "is_selected" in cart_item_dict):
         latest_cart = CartItem.objects.filter(
             cart__user_id=user_id).order_by("created_at")
-        latest_cart.filter(product_id=product_id).update(**request.data)
-    elif not product_id and "is_selected" in request.data:
+        latest_cart.filter(product_id=product_id).update(**cart_item_dict)
+    elif not product_id and "is_selected" in cart_item_dict:
         latest_cart = CartItem.objects.filter(
             cart__user_id=user_id).order_by("created_at")
-        latest_cart.update(is_selected=request.data["is_selected"])
+        latest_cart.update(is_selected=cart_item_dict["is_selected"])
     else:
         updated = False
 
@@ -201,13 +189,10 @@ def update_cart_item(request):
 
 
 @api_view(['DELETE'])
-@authentication_classes([CustomJWTAuthentication])
-@permission_classes([])
 def delete_cart_item(request):
-    payload = request.auth
-    user_id = payload.get("user_id")
+    user_id = request.GET.get("user_id", None)
     # item_id = request.data.pop("item_id", None)
-    product_ids = request.data.pop("product_ids", None)
+    product_ids = request.GET.get("product_ids", None)
 
     if product_ids:
         latest_cart = CartItem.objects.filter(
@@ -221,12 +206,9 @@ def delete_cart_item(request):
 
 
 @api_view(['POST'])
-@authentication_classes([CustomJWTAuthentication])
-@permission_classes([])
 def place_order(request):
 
-    payload = request.auth
-    user_id = payload.get("user_id")
+    user_id = request.data.get("user_id", None)
     order_data = request.data.pop("order", None)
     order_items = request.data.pop("order_items", None)
 
@@ -270,12 +252,9 @@ def place_order(request):
 
 
 @api_view(['GET'])
-@authentication_classes([CustomJWTAuthentication])
-@permission_classes([])
 def get_address_list(request):
 
-    payload = request.auth
-    user_id = payload.get("user_id")
+    user_id = request.GET.get("user_id", None)
     address_list = ShippingAddress.objects.filter(
         user_id=user_id).order_by("created_at")
     serializer = ShippingAddressSerializer(address_list, many=True)
@@ -289,13 +268,10 @@ def get_address_list(request):
 
 
 @api_view(['POST'])
-@authentication_classes([CustomJWTAuthentication])
-@permission_classes([])
 def add_address(request):
 
-    payload = request.auth
-    user_id = payload.get("user_id")
-    new_address = dict(request.data)
+    user_id = request.data.get("user_id", None)
+    new_address = dict(request.data.get("new_address", {}))
 
     if new_address:
         new_address["user_id"] = user_id
@@ -321,13 +297,10 @@ def add_address(request):
 
 
 @api_view(['PATCH'])
-@authentication_classes([CustomJWTAuthentication])
-@permission_classes([])
 def edit_address(request):
 
-    payload = request.auth
-    user_id = payload.get("user_id")
-    updated_address = dict(request.data)
+    user_id = request.data.get("user_id", None)
+    updated_address = dict(request.data.get("updated_address", {}))
     address_id = updated_address.pop("id", None)
     updated_address.pop("is_selected")
     updated = False
