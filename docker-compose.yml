@@ -8,6 +8,8 @@ services:
       - 5433:5432
     env_file: .env
     container_name: shopsurfer_data_db
+    networks:
+      - my_network
 
   shopsurfer_data:
     build:
@@ -23,3 +25,18 @@ services:
     command: "python manage.py runserver 0.0.0.0:8000"
     depends_on:
       - shopsurfer_data_db
+      - shopsurfer_data_redis
+    networks:
+      - my_network
+
+  shopsurfer_data_redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    container_name: shopsurfer_data_redis
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    external: true
