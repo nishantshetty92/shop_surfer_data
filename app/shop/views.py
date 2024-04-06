@@ -17,6 +17,10 @@ from django.conf import settings
 from django.core.cache import cache
 import json
 
+@api_view(['GET'])
+def health_check(request):
+    return Response({"Data Service OK"}, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 def get_categories(request):

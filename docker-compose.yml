@@ -1,42 +1,39 @@
 version: "3.8"
 services:
-  shopsurfer_data_db:
-    image: postgres
-    volumes:
-      - ./data/db:/var/lib/postgresql/data
-    ports:
-      - 5433:5432
-    env_file: .env
-    container_name: shopsurfer_data_db
-    networks:
-      - my_network
+  # shopsurfer_data_db:
+  #   image: postgres
+  #   volumes:
+  #     - ./data/db:/var/lib/postgresql/data
+  #   ports:
+  #     - 5433:5432
+  #   env_file: .env
+  #   container_name: shopsurfer_data_db
+  #   networks:
+  #     - my_network
 
   shopsurfer_data:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file: .env
-    volumes:
-      - ./app:/app
+    env_file: .data.env
     ports:
-      - 8002:8000
+      - 80:80
     image: shopsurfer_data:latest
     container_name: shopsurfer_data
-    command: "python manage.py runserver 0.0.0.0:8000"
+    # command: "gunicorn shop_surfer_data.wsgi:application -b 0.0.0.0:8000"
     depends_on:
-      - shopsurfer_data_db
+      # - shopsurfer_data_db
       - shopsurfer_data_redis
-    networks:
-      - my_network
+    # networks:
+    #   - my_network
 
   shopsurfer_data_redis:
     image: redis:latest
     ports:
       - "6379:6379"
     container_name: shopsurfer_data_redis
-    networks:
-      - my_network
-
-networks:
-  my_network:
-    external: true
+    # networks:
+    #   - my_network
+# networks:
+#   my_network:
+#     external: true
